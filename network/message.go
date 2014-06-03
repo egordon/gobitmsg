@@ -11,39 +11,32 @@ const (
 	knownMagic = 0xe9beb4d9
 )
 
-// Error Constants
-const (
-	ESMALL = iota
-	EMAGIC = iota
-	EPALEN = iota
-	ECHECK = iota
-)
-
-type MessageError int
-
-func (errno MessageError) Error() string {
-	switch(errno) {
-	case ESMALL:
-		return "Header size too small"
-	case EMAGIC:
-		return "Magic number in header is unknown"
-	case EPALEN:
-		return "Payload length does not match header"
-	case ECHECK:
-		return "Invalid SHA512 checksum for payload"
-	default:
-		return "Unknown Error"
-	}
-}
-
 type Message struct {
-	from *Peer // Peer who sent the message (nil if local is sending)
+	peer *Peer // Peer who sent the message (nil if local is sending)
 	magic uint32 // Magic number associated with network
 	command string // Action this message wants to take
 	length uint32 // Length of the payload
 	checksum uint32 // First 4 bytes of sha512(payload)
 	payload []byte
 }
+
+func MakeMessage(cmd string, pload Serializer, recipient *Peer) *Message {
+	msg := new(Message)
+	msg.peer = recipient
+	msg.magic = knownMagic
+	msg.payload = pload.Serialize()
+	msg.length = uint32(len(msg.payload))
+	msg.command = strconv.QuoteToASCII(cmd)
+	
+	digest := sha512.Sum512(msg.payload)
+	checksum := make([]byte, 4, 4)
+	for i := 0; i < 4; i++ {
+		checksum[i] = digest[i]
+	}
+	msg.checksum = binary.BigEndian.Uint32(checksum)
+	return msg
+}
+
 
 func (m *Message) Serialize() []byte {
 	ret := make([]byte, 0, HeaderLen)
@@ -121,6 +114,6 @@ func (m *Message) Sender() *Peer {
 	if m == nil {
 		return nil
 	} else {
-		return m.from
+		return m.peer
 	}
 }

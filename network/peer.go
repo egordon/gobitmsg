@@ -12,6 +12,15 @@ type Peer struct {
 	connected bool // Whether connection is alive or not
 }
 
+func MakePeer(host string) *Peer {
+	peer := new(Peer)
+	peer.hostname = host
+	peer.connected = false
+	peer.conn = nil
+
+	return peer
+}
+
 func (p *Peer) Hostname() string {
 	if p == nil {
 		return ""
@@ -28,7 +37,13 @@ func (p *Peer) IsConnected() bool {
 	}
 }
 
-func (p *Peer) connect(recvChannel chan Message) (error) {
+func (p *Peer) send(msg []byte) error {
+	_, err := p.conn.Write(msg)
+	return err
+}
+
+
+func (p *Peer) connect(recvChannel chan *Message) (error) {
 	if p.IsConnected() {
 		return nil
 	}
@@ -48,12 +63,12 @@ func (p *Peer) connect(recvChannel chan Message) (error) {
 	return nil
 }
 
-func (p *Peer) recv(c chan Message) {
-	msg := new(Message)
+func (p *Peer) recv(c chan *Message) {
 	msgHead := make([]byte, HeaderLen, HeaderLen)
 
 	for p.IsConnected() {
-		
+		msg := new(Message)
+
 		_, err := io.ReadFull(p.conn, msgHead)
 		if err != nil {
 			break
@@ -75,12 +90,10 @@ func (p *Peer) recv(c chan Message) {
 			log.Println("Peer %s sent invalid Message: %s", p, err)
 		}
 
-		msg.from = p
+		msg.peer = p
 
-		// Copy valid message and pass it along for handling
-		var cpy Message = *msg
-		c <- cpy
+		// Pass valid message along for handling
+		c <- msg
 	}
-	msg = nil
 	msgHead = nil
 }
