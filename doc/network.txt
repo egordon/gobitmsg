@@ -1,0 +1,117 @@
+PACKAGE DOCUMENTATION
+
+package network
+    import "github.com/egordon/gobitmsg/network"
+
+    Package network provides threaded P2P functionality for sending Messages
+    wrapped in the bitmsg header.
+
+
+CONSTANTS
+
+const (
+    ENTFND = iota
+    EPRDUP = iota
+)
+    Error constants for PeerError
+
+const (
+    ESMALL = iota
+    EMAGIC = iota
+    EPALEN = iota
+    ECHECK = iota
+)
+    Error constants for MessageError
+
+
+FUNCTIONS
+
+func ConnectToPeer(p *Peer) error
+    ConnectToPeer adds the provided peer to the peerlist, or just connects
+    to it if it already exists. Duplicate connected peers are not allowed.
+
+func Listen(port string) (chan int, error)
+    Listen sets up a local TCP BitMSG server on the provided port. The port
+    must be in the format ":###", with the colon.
+
+func Send(msg *Message) error
+    Send adds a validated messge to the send channel.
+
+
+TYPES
+
+type Message struct {
+    // contains filtered or unexported fields
+}
+    Message holds a standard, serializeable BitMsg message header and
+    generic payload. See more info at
+    https://bitmessage.org/wiki/Protocol_specification#Message_structure
+
+
+func MakeMessage(cmd string, pload Serializer, recipient *Peer) *Message
+    MakeMessage generates a new message given a command, payload, and
+    recipient.
+
+
+func (m *Message) Command() string
+    Command returns the command associated with the message
+
+func (m *Message) Payload() []byte
+    Payload returns the generic payload byte slice of the Message
+
+func (m *Message) Sender() *Peer
+    Sender returns the recipient and/or sender of the message
+
+func (m *Message) Serialize() []byte
+    Serialize converts a message to a byte stream that can be sent over the
+    network.
+
+
+type MessageError int
+    MessageError handles all errors associated with the Message struct.
+
+
+func (errno MessageError) Error() string
+    Error converts the MessageError constant to a human-readable string
+
+
+type Peer struct {
+    // contains filtered or unexported fields
+}
+    Peer represents and holds connection information for an external
+    connection specified by a hostname/port combination.
+
+
+func GetPeer(host string) *Peer
+    GetPeer checks the peer list to see if a peer exists under a hostname.
+    It then returns that peer.
+
+
+func MakePeer(host string) *Peer
+    MakePeer creates an unconnected peer from a host/port combination
+
+
+func (p *Peer) Hostname() string
+    Hostname returns the host/port combination for a given peer
+
+func (p *Peer) IsConnected() bool
+    IsConnected returns the connection status of the peer
+
+
+type PeerError int
+    PeerError handles all errors associated with the Peer struct.
+
+
+func (errno PeerError) Error() string
+    Error converts the PeerError constant to a human-readable string
+
+
+type Serializer interface {
+    Serialize() []byte // Convert object to byte slice
+}
+    Serializer denotes a type that can be converted to a byte slice to be
+    sent over the network.
+
+
+
+

@@ -1,20 +1,31 @@
+// Package network provides threaded P2P functionality for sending
+// Messages wrapped in the bitmsg header.
 package network
 
 import (
-	"net"
 	"log"
+	"net"
 )
 
+// Serializer denotes a type that can be converted to a byte slice
+// to be sent over the network.
 type Serializer interface {
-        Serialize() []byte // Convert object to byte slice
+	Serialize() []byte // Convert object to byte slice
 }
 
+// Default receive/send channel buffer length
 const chanBufLen = 100
 
+// Known list of peers.
 var peerlist map[string]*Peer
+
+// Channels acting as queues for sending and
+// receiving messages.
 var recvChan chan *Message
 var sendChan chan *Message
 
+// checkInit (unExported) just makes sure that all the global
+// scope variables are initialized.
 func checkInit() {
 	if peerlist == nil {
 		peerlist = make(map[string]*Peer)
@@ -29,6 +40,8 @@ func checkInit() {
 
 }
 
+// GetPeer checks the peer list to see if a peer exists
+// under a hostname. It then returns that peer.
 func GetPeer(host string) *Peer {
 
 	checkInit()
@@ -41,6 +54,8 @@ func GetPeer(host string) *Peer {
 	}
 }
 
+// Listen sets up a local TCP BitMSG server on the provided
+// port. The port must be in the format ":###", with the colon.
 func Listen(port string) (chan int, error) {
 
 	checkInit()
@@ -57,6 +72,10 @@ func Listen(port string) (chan int, error) {
 	return quit, nil
 }
 
+
+// ConnectToPeer adds the provided peer to the peerlist,
+// or just connects to it if it already exists. Duplicate
+// connected peers are not allowed.
 func ConnectToPeer(p *Peer) error {
 	_, ok := peerlist[p.hostname]
 	if !ok {
@@ -71,8 +90,9 @@ func ConnectToPeer(p *Peer) error {
 
 	return p.connect(recvChan)
 }
-	
 
+
+// Send adds a validated messge to the send channel.
 func Send(msg *Message) error {
 
 	checkInit()
@@ -90,9 +110,9 @@ func Send(msg *Message) error {
 	}
 	return nil
 }
-	
 
-
+// accept (unexported), run as a goroutine, provides the
+// listen loop for new peers.
 func accept(ln net.Listener, quit chan int) {
 	isRunning := true
 	for isRunning {
@@ -115,8 +135,11 @@ func accept(ln net.Listener, quit chan int) {
 			go peer.recv(recvChan)
 		}
 	}
-}	
+}
 
+// sendThread (unexported), meant to be run as a goroutine,
+// continuously pulls off the send Channel, ensures that the
+// recipient is still connected, and sends the message.
 func sendThread() {
 	for {
 		msg := <-sendChan
@@ -128,4 +151,3 @@ func sendThread() {
 		}
 	}
 }
-

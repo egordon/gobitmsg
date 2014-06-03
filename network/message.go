@@ -1,25 +1,28 @@
 package network
 
 import (
+	"crypto/sha512"
 	"encoding/binary"
 	"strconv"
-	"crypto/sha512"
 )
 
 const (
-	HeaderLen = 24
+	headerLen  = 24
 	knownMagic = 0xe9beb4d9
 )
 
+// Message holds a standard, serializeable BitMsg message header and generic payload.
+// See more info at https://bitmessage.org/wiki/Protocol_specification#Message_structure
 type Message struct {
-	peer *Peer // Peer who sent the message (nil if local is sending)
-	magic uint32 // Magic number associated with network
-	command string // Action this message wants to take
-	length uint32 // Length of the payload
+	peer     *Peer  // Peer who sent the message (nil if local is sending)
+	magic    uint32 // Magic number associated with network
+	command  string // Action this message wants to take
+	length   uint32 // Length of the payload
 	checksum uint32 // First 4 bytes of sha512(payload)
-	payload []byte
+	payload  []byte
 }
 
+// MakeMessage generates a new message given a command, payload, and recipient.
 func MakeMessage(cmd string, pload Serializer, recipient *Peer) *Message {
 	msg := new(Message)
 	msg.peer = recipient
@@ -27,7 +30,7 @@ func MakeMessage(cmd string, pload Serializer, recipient *Peer) *Message {
 	msg.payload = pload.Serialize()
 	msg.length = uint32(len(msg.payload))
 	msg.command = strconv.QuoteToASCII(cmd)
-	
+
 	digest := sha512.Sum512(msg.payload)
 	checksum := make([]byte, 4, 4)
 	for i := 0; i < 4; i++ {
@@ -37,7 +40,7 @@ func MakeMessage(cmd string, pload Serializer, recipient *Peer) *Message {
 	return msg
 }
 
-
+// Serialize converts a message to a byte stream that can be sent over the network.
 func (m *Message) Serialize() []byte {
 	ret := make([]byte, 0, HeaderLen)
 	binary.BigEndian.PutUint32(ret, m.magic)
@@ -52,12 +55,14 @@ func (m *Message) Serialize() []byte {
 	return ret
 }
 
+
+
 func (m *Message) validate() error {
-	
+
 	if m.magic != knownMagic {
 		return MessageError(EMAGIC)
 	}
-	
+
 	if m.length != uint32(len(m.payload)) {
 		return MessageError(EPALEN)
 	}
@@ -94,6 +99,7 @@ func (m *Message) setPayload(rawBytes []byte) {
 	copy(m.payload, rawBytes)
 }
 
+// Payload returns the generic payload byte slice of the Message
 func (m *Message) Payload() []byte {
 	if m == nil {
 		return nil
@@ -102,6 +108,7 @@ func (m *Message) Payload() []byte {
 	}
 }
 
+// Command returns the command associated with the message
 func (m *Message) Command() string {
 	if m == nil {
 		return ""
@@ -110,6 +117,7 @@ func (m *Message) Command() string {
 	}
 }
 
+// Sender returns the recipient and/or sender of the message
 func (m *Message) Sender() *Peer {
 	if m == nil {
 		return nil
