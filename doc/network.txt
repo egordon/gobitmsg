@@ -20,6 +20,7 @@ const (
     EMAGIC = iota
     EPALEN = iota
     ECHECK = iota
+    ETIMEO = iota
 )
     Error constants for MessageError
 
@@ -51,6 +52,11 @@ type Message struct {
 func MakeMessage(cmd string, pload Serializer, recipient *Peer) *Message
     MakeMessage generates a new message given a command, payload, and
     recipient.
+
+
+func NextMessage(timeout time.Duration) (*Message, error)
+    NextMessage returns the next message in the queue or nil if the timeout
+    is reached
 
 
 func (m *Message) Command() string
