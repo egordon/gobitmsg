@@ -43,14 +43,13 @@ func MakeMessage(cmd string, pload Serializer, recipient *Peer) *Message {
 
 // Serialize converts a message to a byte stream that can be sent over the network.
 func (m *Message) Serialize() []byte {
-	ret := make([]byte, 0, headerLen)
-	binary.BigEndian.PutUint32(ret, m.magic)
-	ret = strconv.AppendQuoteToASCII(ret, strconv.QuoteToASCII(m.command))
+	ret := make([]byte, headerLen, headerLen)
+	binary.BigEndian.PutUint32(ret[0:4], m.magic)
+	copy(ret[4:16], m.command)
 
 	// Ensure string had a max size of 12
-	ret = ret[:16]
-	binary.BigEndian.PutUint32(ret, m.length)
-	binary.BigEndian.PutUint32(ret, m.checksum)
+	binary.BigEndian.PutUint32(ret[16:20], m.length)
+	binary.BigEndian.PutUint32(ret[20:24], m.checksum)
 	ret = append(ret, m.payload...)
 
 	return ret

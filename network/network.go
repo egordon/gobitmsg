@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"time"
+	"fmt"
 )
 
 // Serializer denotes a type that can be converted to a byte slice
@@ -57,20 +58,18 @@ func GetPeer(host string) *Peer {
 
 // Listen sets up a local TCP BitMSG server on the provided
 // port. The port must be in the format ":###", with the colon.
-func Listen(port string) (chan int, error) {
+func Listen(port string) (error) {
 
 	checkInit()
 
 	ln, err := net.Listen("tcp", port)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	quit := make(chan int)
+	go accept(ln)
 
-	go accept(ln, quit)
-
-	return quit, nil
+	return nil
 }
 
 
@@ -112,9 +111,9 @@ func Send(msg *Message) error {
 	return nil
 }
 
-// NextMessage returns the next message in the queue
+// GetNext returns the next message in the queue
 // or nil if the timeout is reached
-func NextMessage(timeout time.Duration) (*Message, error) {
+func GetNext(timeout time.Duration) (*Message, error) {
 	t := make(chan bool, 1)
 	
 	go func() {
@@ -132,27 +131,23 @@ func NextMessage(timeout time.Duration) (*Message, error) {
 
 // accept (unexported), run as a goroutine, provides the
 // listen loop for new peers.
-func accept(ln net.Listener, quit chan int) {
-	isRunning := true
-	for isRunning {
-		select {
-		case <-quit:
-			isRunning = false
-		default:
-			conn, err := ln.Accept()
-			if err != nil {
-				log.Println(err)
-				conn.Close()
-				continue
-			}
+func accept(ln net.Listener) {
 
-			peer := MakePeer(conn.RemoteAddr().String())
-			peer.conn = conn
-			peer.connected = true
-			peerlist[peer.hostname] = peer
-
-			go peer.recv(recvChan)
+	for ln != nil {
+		conn, err := ln.Accept()
+		if err != nil {
+			fmt.Println("EEEEEEEERRRRRRRRRROOOOOOOOORRRRRRR!")
+			log.Println(err)
+			conn.Close()
+			break
 		}
+		
+		peer := MakePeer(conn.RemoteAddr().String())
+		peer.conn = conn
+		peer.connected = true
+		peerlist[peer.hostname] = peer
+		
+		go peer.recv(recvChan)
 	}
 }
 

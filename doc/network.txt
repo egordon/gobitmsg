@@ -49,14 +49,14 @@ type Message struct {
     https://bitmessage.org/wiki/Protocol_specification#Message_structure
 
 
+func GetNext(timeout time.Duration) (*Message, error)
+    GetNext returns the next message in the queue or nil if the timeout is
+    reached
+
+
 func MakeMessage(cmd string, pload Serializer, recipient *Peer) *Message
     MakeMessage generates a new message given a command, payload, and
-    recipient.
-
-
-func NextMessage(timeout time.Duration) (*Message, error)
-    NextMessage returns the next message in the queue or nil if the timeout
-    is reached
+    recipient. No defensive copy is made of the byte slice
 
 
 func (m *Message) Command() string
