@@ -23,13 +23,14 @@ type Message struct {
 }
 
 // MakeMessage generates a new message given a command, payload, and recipient.
+// No defensive copy is made of the byte slice
 func MakeMessage(cmd string, pload Serializer, recipient *Peer) *Message {
 	msg := new(Message)
 	msg.peer = recipient
 	msg.magic = knownMagic
 	msg.payload = pload.Serialize()
 	msg.length = uint32(len(msg.payload))
-	msg.command = strconv.QuoteToASCII(cmd)
+	msg.command = strconv.Quote(cmd)
 
 	digest := sha512.Sum512(msg.payload)
 	checksum := make([]byte, 4, 4)
