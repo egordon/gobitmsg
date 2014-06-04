@@ -69,7 +69,7 @@ func (p *Peer) connect(recvChannel chan *Message) error {
 }
 
 func (p *Peer) recv(c chan *Message) {
-	msgHead := make([]byte, HeaderLen, HeaderLen)
+	msgHead := make([]byte, headerLen, headerLen)
 
 	for p.IsConnected() {
 		msg := new(Message)

@@ -5,6 +5,7 @@ package network
 import (
 	"log"
 	"net"
+	"time"
 )
 
 // Serializer denotes a type that can be converted to a byte slice
@@ -109,6 +110,24 @@ func Send(msg *Message) error {
 		return PeerError(ENTFND)
 	}
 	return nil
+}
+
+// NextMessage returns the next message in the queue
+// or nil if the timeout is reached
+func NextMessage(timeout time.Duration) (*Message, error) {
+	t := make(chan bool, 1)
+	
+	go func() {
+		time.Sleep(timeout)
+		t <- true
+	}()
+	
+	select {
+	case msg := <-recvChan:
+		return msg, nil
+	case <-t:
+		return nil, MessageError(ETIMEO)
+	}
 }
 
 // accept (unexported), run as a goroutine, provides the

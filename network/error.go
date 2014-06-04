@@ -30,6 +30,7 @@ const (
 	EMAGIC = iota
 	EPALEN = iota
 	ECHECK = iota
+	ETIMEO = iota
 )
 
 // Error converts the MessageError constant to a human-readable string
@@ -43,6 +44,8 @@ func (errno MessageError) Error() string {
 		return "Payload length does not match header"
 	case ECHECK:
 		return "Invalid SHA512 checksum for payload"
+	case ETIMEO:
+		return "Message timeout, message queue empty"
 	default:
 		return "Unknown Message Error"
 	}

@@ -42,7 +42,7 @@ func MakeMessage(cmd string, pload Serializer, recipient *Peer) *Message {
 
 // Serialize converts a message to a byte stream that can be sent over the network.
 func (m *Message) Serialize() []byte {
-	ret := make([]byte, 0, HeaderLen)
+	ret := make([]byte, 0, headerLen)
 	binary.BigEndian.PutUint32(ret, m.magic)
 	ret = strconv.AppendQuoteToASCII(ret, strconv.QuoteToASCII(m.command))
 
@@ -83,7 +83,7 @@ func (m *Message) validate() error {
 }
 
 func (m *Message) makeHeader(rawBytes []byte) error {
-	if len(rawBytes) < HeaderLen {
+	if len(rawBytes) < headerLen {
 		return MessageError(ESMALL)
 	}
 	m.magic = binary.BigEndian.Uint32(rawBytes[:4])
