@@ -25,6 +25,9 @@ type NetAddr struct {
 }
 
 func (n *NetAddr) Serialize() []byte {
+	if n == nil {
+		return nil
+	}
         ret := make([]byte, 0, netAddrLen)
         binary.BigEndian.PutUint64(uint64(n.Time.Unix()))
         binary.BigEndian.PutUint32(n.Stream)
@@ -53,7 +56,7 @@ func (n *NetAddr) Unserialize(work []byte) error {
 // See https://bitmessage.org/wiki/Protocol_specification#Message_types
 
 type Version struct {
-	Version int32
+	Version uint32
 	Services uint64
 	Timestamp time.Time
 	Addr_Recv NetAddr
@@ -65,7 +68,14 @@ type Version struct {
 func (v *Version) Serialize() []byte {
 	ret := make([]byte, 0, versionLen)
 	
-	binary.BigEndian.PutUint32(uint32
+	binary.BigEndian.PutUint32(ret, v.Version)
+	binary.BigEndian.PutUint64(ret, v.Services)
+	binary.BigEndian.PutUint64(ret, uint64(v.Timestamp.Unix()))
+	net := n.Addr_Recv.Serialize()
+	append(ret, net[12:])
+	net = n.Addr_From.Serialize()
+	append(ret, net[12:])
+	binary.BigEndian.PutUint64(ret, v.Nonce)
 
 	return ret
 }
