@@ -101,4 +101,5 @@ func (p *Peer) recv(c chan *Message) {
 		c <- msg
 	}
 	msgHead = nil
+	delete(peerlist, p.hostname)
 }

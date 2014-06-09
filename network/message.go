@@ -4,6 +4,7 @@ import (
 	"crypto/sha512"
 	"encoding/binary"
 	"strconv"
+	"github.com/egordon/gobitmsg/types"
 )
 
 const (
@@ -24,7 +25,7 @@ type Message struct {
 
 // MakeMessage generates a new message given a command, payload, and recipient.
 // No defensive copy is made of the byte slice
-func MakeMessage(cmd string, pload Serializer, recipient *Peer) *Message {
+func MakeMessage(cmd string, pload types.Serializer, recipient *Peer) *Message {
 	msg := new(Message)
 	msg.peer = recipient
 	msg.magic = knownMagic

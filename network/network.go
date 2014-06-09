@@ -9,12 +9,6 @@ import (
 	"fmt"
 )
 
-// Serializer denotes a type that can be converted to a byte slice
-// to be sent over the network.
-type Serializer interface {
-	Serialize() []byte // Convert object to byte slice
-}
-
 // Default receive/send channel buffer length
 const chanBufLen = 100
 
@@ -88,7 +82,11 @@ func ConnectToPeer(p *Peer) error {
 		return PeerError(EPRDUP)
 	}
 
-	return p.connect(recvChan)
+	err := p.connect(recvChan)
+	if err != nil {
+		delete(peerlist, p.hostname)
+	}
+	return err
 }
 
 
